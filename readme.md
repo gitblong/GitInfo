@@ -3,11 +3,11 @@
 git init
 ```
 #指定要跟踪的文件(只有跟踪的文件，git才知道他们的状态）
-```
+
 #Git基础
 ##获取仓库
 ###git add 文件名
-```
+
 ###进行初始提交
 ```
 git commit -m 'initial project version'
@@ -34,7 +34,7 @@ git status -s
     ```
     cat .gitignore
     *.[oa]
-    ````
+    ```
 ###查看已更改但尚未暂存的内容
 ```
 git diff
@@ -50,9 +50,7 @@ rm PROJECTS.md
 ###移动文件，重命名
 ```
 git mv file_from file_to
-```
 //这个操作相当于运行了如下命令
-```
 git rm README.md
 git add READ
 ```
@@ -130,7 +128,7 @@ git branch -d [分知名]		//删除分支
 ```
 
 ##分支管理
-···
+```
 git branch		//查看分支
 git branch -v 		//查看分支详细信息
 git branch --merged	//查看已经合并的分支
