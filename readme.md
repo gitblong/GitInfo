@@ -30,12 +30,12 @@ git status
 git status -s
 ```
 ### 忽略文件
-    让git忽略显示某些文件,如在.gitignore配置一下内偶然，忽略.a,.o后缀的文件
+让git忽略显示某些文件,如在.gitignore配置一下内偶然，忽略.a,.o后缀的文件
     
-    ```
-    cat .gitignore
-    *.[oa]
-    ```
+ ```
+ cat .gitignore
+ *.[oa]
+ ```
 ### 查看已更改但尚未暂存的内容
 ```
 git diff
