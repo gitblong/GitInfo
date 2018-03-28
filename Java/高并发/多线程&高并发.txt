@@ -1,0 +1,318 @@
+---
+date: 2018-03-28 12:10
+status: public
+title: Java并发编程
+---
+
+# 线程的生命周期
+线程在其生命周期中经历各个阶段。 例如，线程诞生，启动，运行，然后死亡。 下图显示了线程的完整生命周期。
+![](http://www.sxt.cn/360shop/Public/admin/UEditor/20170627/1498550974753801.jpg)
+## 以下是线程生命周期的阶段 -
+**新线程(New)** - 新线程在新的状态下开始其生命周期。直到程序启动线程为止，它保持在这种状态。它也被称为出生线程。
+
+**可运行(Runnable)** - 新诞生的线程启动后，该线程可以运行。状态的线程被认为正在执行其任务。
+
+**等待(Waiting)** - 有时，线程会转换到等待状态，而线程等待另一个线程执行任务。 只有当另一个线程发信号通知等待线程才能继续执行时，线程才转回到可运行状态。
+
+**定时等待(Timed Waiting)** - 可运行的线程可以在指定的时间间隔内进入定时等待状态。 当该时间间隔到期或发生等待的事件时，此状态的线程将转换回可运行状态。
+
+**终止(Dead)**- 可执行线程在完成任务或以其他方式终止时进入终止状态。
+## 线程的优先级
+每个Java线程都有一个优先级，可以帮助操作系统确定安排线程的顺序。Java线程优先级在`MIN_PRIORITY(1)~MAX_PRIORITY10`之间的范围内。默认情况下，每个线程都被赋予`NORM_PRIORITY(5)`具有最高优先级的线程对于一个程序来说更重要，应该在低优先级线程之间分配处理时间， 然而，线程优先级不能保证线程执行的顺序，并且依赖于平台。
+## 线程的实现
+###通过实现Runnable创建一个线程
+如果想让一个类作为一个线程执行，那么您可以通过实现Runable接口来实现此目的。需要遵循三个基本步骤
+**第一步**
+```
+public void run(){}
+```
+**第二步**
+在第二步中，您将使用一下构造函数实例化一个Thread对象
+```
+Thread(Runable threadObj,Stirng threadName);
+```
+其中threadObj是实现Runable接口的类的实例，threadName是给予新线程的名称。
+**第三步**
+当创建了一个线程对象，可以通过调用start()方法的调用，以下是一个简单的start()方法。
+```
+void start();
+```
+### 通过扩展Thread类创建一个线程
+**第一步**
+需要覆盖Thread类中的run()方法。该方法为线程提供一个入口点，您将把完整的业务逻辑放在此方法中。以下是run()方法的简单语法
+```
+public void run()    
+```
+**第二步**
+当创建了Thread对象，您可以通过调用start()方法启动他
+```
+void start();
+```
+##并发的主要操作
+核心Java对多线程程序进行完全控制，也可以开发一个可以根据您的要求完全暂停，恢复或停止的多线程程序。有各种静态方法可以用于线程对象来控制它们的行为。下表列出了这些方法
+<table>
+<tr>
+    <th>编号</th>
+    <th>方法</th>
+    <th>说明描述</th>        
+<tr>
+<td>1---</td>
+<td>`public void suspend()`</td>
+<td> 该方法使线程处于挂起状态，可以使用resume()方法恢复</td>
+<tr>
+<td>2</td>
+<td>`public void stop()`</td>
+<td> 该方法使线程完全停止</td>
+</tr>
+<tr>
+<td>3</td>
+<td>`public void resume()`</td>
+<td> 该方法恢复使用suspend的线程</td>
+</tr>
+<tr>
+<td>4</td>
+<td>`public void wait()`</td>
+<td> 该方法使当前线程等待另一个线程调用nodify()</td>
+</tr>
+<tr>
+<td>5</td>
+<td>`public void nodify()`</td>
+<td> 唤醒在此对象监视器上等待的单个线程</td>
+</tr>
+</table>
+_注意_
+最新版本的Java已经不再使用suspend（）方法，resume（）和stop方法，一次我们要**自己造！**
+对于`notify`和`notifyAll`这两个线程都是唤醒线程中等待的线程，但是`notify`只能唤醒一个，而`notifyAll`可以唤醒多个线程，但是，真正运行的时候其实只有一个线程是在运行的
+```
+private static final Object obj = new Object();
+    static class R implements Runnable {
+        int i;
+ 
+        R(int i) {
+            this.i = i;
+        }
+ 
+        public void run() {
+            try {
+                synchronized(obj) {
+                    System.out.println("线程->  " + i + " 等待中");
+                    obj.wait();
+                    System.out.println("线程->  " + i + " 在运行了");
+                    Thread.sleep(30000);
+                }
+            } catch(Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+```
+定义一个main方法运行它
+```
+Thread[] rs = new Thread[10];
+        for(int i = 0;i < 10;i++) {
+            rs[i] = new Thread(new R(i));
+        }
+        for(Thread r : rs) {
+            r.start();
+        }
+ 
+        Thread.sleep(5000);
+        synchronized(obj) {
+            obj.notifyAll();
+        }
+```
+## 关于死锁
+### 死锁的形成 `Deadlock`
+打个比方，假设P1和P2两个进程，都需要A和B两个资源，现在P1持有A等待B资源，而P2持有B等待A资源，两个都等待另一个资源而不肯释放资源，就这样无线等待中，就形成了死锁，这也是思索的一个情况。给死锁下个定义，如果一组进程中每个进程都在等待仅由该组进程中的其他进程才能引发的事件，那么该组进程是死锁。
+## 使用类
+**关于ThreadLocal类：**用于创建只能由同一个线程读取和写入的线程局部变量。
+<table>
+<tr><th>编号	</th><th>方法</th><th>描述</th></tr>
+<tr><td>1---</td><td>	public T get()	</td><td>返回当前线程的线程局部变量的副本中的值。</td>
+<tr><td>2</td><td>	protected T initialValue()</td><td>	返回此线程局部变量的当前线程的“初始值”。
+<tr><td>3</td><td>	public void remove()</td><td>	删除此线程局部变量的当前线程的值。
+<tr><td>4</td><td>	public void set(T value)	</td><td>将当前线程的线程局部变量的副本设置为指定的值。
+</table>
+**关于ThreadLocalRadom**当需要多个线程生成随机数时，很有用；提高性能，且能占用更少的资源
+## 锁的使用
+### Lock类简介
+接口用做线程同步机制，类似于同步块。新的锁定机制更灵活，提高比同步更多的选项。锁和同步块之间的区别如下：
+* **序列的保证** - 同步块不提供对等待线程进行访问的序列的任何保证，但Lock接口处理他。 
+* **无超时**，如果未授权锁，则同步块没有超时选项。Lock接口提供了这样的选项
+* **单一方法** 同步块必须完全包含在单个方法中，而Lock接口的方法lock()和unlock()可以以不同的方式调用。
+#### Lock类中的方法
+
+##### **实现类ReentrantLock**
+<table>
+<tr></tr>
+<tr><th>编号</th><th>方法</th>	<th>描述说明</th></tr>
+<tr><td>1</td><td>public void lock()</td><td>获得锁</td></tr>
+<tr><td>2	</td><td>public void lockInterruptibly()</td><td>获取锁定，除非当前线程中断</td></tr>
+<tr><td>3	</td><td>public Condition newCondition()</td><td>返回绑定到此Lock实例的新Condition实例</td></tr>
+<tr><td>4	</td><td>public boolean tryLock()</td><td>	只有在调用时才可以获得锁</td></tr>
+<tr><td>5	</td><td>public boolean tryLock(long time, TimeUnit unit)</td><td>如果在给定的等待时间内自由，并且当前线程未被中断，则获取该锁。</td></tr>
+<tr><td>6</td><td>	public void unlock()	</td><td>释放锁</td></tr>
+</table>
+#### ReadWriteLock接口
+接口允许一次读取多个线程，但一次只能写入一个线程
+*  **读锁** - 如果没有线程锁定`ReadWriteLock`进行写入，则多线程可以访问读锁。
+* **写锁** - 如果没有线程正在读或写，那么一个线程可以访问写锁
+#####锁方法
+重要方法
+<table><tr><th>编号</th><th>	方法</th><th>描述</th></tr>
+<tr><td>1---</td><td>public Lock readLock()	</td><td>返回用于读的锁。</td>
+<tr><td>2</td><td>	public Lock writeLock()	</td><td>返回用于写的锁。</td>
+</table>
+ 实现类ReentranReadWriteLock
+ 
+####  Condition接口
+ 接口提供一个线程挂起执行的能力，知道给定的条件为真。Condition对象必须绑定到Lock，并使用newCondition()方法获取对象
+**Condition类的方法名称**
+<table>
+ <tr><th>序号</th><th>方法名称</th><th>描述</th><th>相对于</th></tr>
+ <tr><td>1</td><td>public void await()</td><td>使当前线程等待，直到发出信号或中断信号。</td><td>wait</td></tr>
+<tr><td> 2</td><td>	public boolean await(long time, TimeUnit unit)	</td><td>使当前线程等待直到发出信号或中断，或指定的等待时间过去。</td><td>wait</td></tr>
+<tr><td>3	</td><td>public long awaitNanos(long nanosTimeout)	</td><td>使当前线程等待直到发出信号或中断，或指定的等待时间过去。</td><td>-</td></tr>
+<tr><td>4	</td><td>public long awaitUninterruptibly()</td><td>	使当前线程等待直到发出信号。</td><td>-</td></tr>
+<tr><td>5	</td><td>public long awaitUntil()</td><td>	使当前线程等待直到发出信号或中断，或者指定的最后期限过去。</td><td>-</td></tr>
+<tr><td>6	</td><td>public void signal()	</td><td>唤醒一个等待线程。</td><td>wait</td>notify</tr>
+<tr><td>7	</td><td>public void signalAll()</td><td>	唤醒所有等待线程。</td><td>notifyAll</td></tr>
+ </table>
+ **_注:_**这个内容比较难理解:我的理解是这样的，这是一个生产者与消费者模式：一个生产者生产了商品，若生产者的队列满了，通过`await`阻塞写线程,通过`signal`唤醒写线程，但是这时候一般需要创建多个Condition实例，**优势**假设缓存队列已经存满，那么阻塞肯定是写线程，唤醒的肯定是读线程，相反阻塞的肯定是读线程，唤醒的肯定是写线程。
+##执行者实例
+ `Executor`接口中的方法
+ 
+ ```
+Executor executor = Executors.newCachedThreadPool();    //获取执行实例
+executor.execute(Runable command)  //在将来的某个时间执行给定的命令
+ ```
+* `Executor`的子接口`ExceutorService`：提供了功能来管理生命周期，这两个单独的任务和执行器本身。
+* `ExceutorService`是`ScheduledExecutorService` ,并支持将来和/或定期执行任务
+* `ExecutorService executor = Executors.newSingleThreadExecutor();`获取单个线程池
+
+## 线程池示例
+### newFixedThreadPool(2)
+**语法**
+```
+ExecutorService fixedPool = Executors.newFixedThreadPool(2);
+```
+其中，
+* 最多2个线程将处于活动状态。
+* 如果提交了两个以上的线程，那么它们将保持在队列中，直到线程可用。
+* 如果一个线程由于执行关闭期间的失败而终止，则执行器尚未被调用，则创建一个新线程。
+* 线程会一直存在，直到池关闭。
+
+### newCachedThreadPool()
+通过调用`Executors`类的静态`newCachedThreadPool()`方法可以获得缓存的线程池。
+其中，
+* `newCachedThreadPool()`方法创建一个具有可扩展线程池的执行器。
+*  这样的执行者适合于发起许多短命的任务的应用程序。
+
+###  newScheduledThreadPool()
+通过调用`Executors`类的`staticnewScheduledThreadPool()`方法获得一个调度的线程池
+语法
+```
+ExecutorService executor = Executors.newScheduledThreadPool(1);
+```
+## 返回线程结果
+### Callable对象
+**Callable对象**可以返回由线程完成的计算结果，而`runnable`接口只能运行线程。`Callable对象`返回`Future`对象，该对象提供监视线程执行的任务进度的方法。`Future`对象可用于检查`Callable`的状态，然后线程完成后从`Callable`中检测结果。它还提供了超时功能
+**语法**
+ ```
+//submit the callable using ThreadExecutor
+//and get the result as a Future object
+Future result10 = executor.submit(new FactorialService(10));
+//get the result using get method of the Future object
+//get method waits till the thread execution and then return the result of the execution.
+ Long factorial10 = result10.get();
+```
+### fork-join框架
+`fork-join`框架允许在几个工作进程中断某个任务，然后等待结果组合它们。 它在很大程度上利用了多处理器机器的生产能力。 以下是`fork-join`框架中使用的核心概念和对象。
+#### Fork
+Fork是一个进程，其中任务将其分成可以并发执行的较小且独立的子任务。
+
+**语法**
+```
+Sum left  = new Sum(array, low, mid);left.fork();
+```
+这里Sum是RecursiveTask的子类，left.fork()方法将任务分解为子任务。
+
+#### Join
+连接(Join)是子任务完成执行后任务加入子任务的所有结果的过程，否则它会持续等待。
+
+#### 语法
+```
+left.join();
+```
+这里剩下的是Sum类的一个对象。
+
+#### ForkJoinPool
+它是一个特殊的线程池，旨在使用fork-and-join任务拆分。
+
+语法
+```
+ForkJoinPool forkJoinPool = new ForkJoinPool(4);
+```
+这里有一个新的ForkJoinPool，并行级别为4个CPU。
+
+#### RecursiveAction
+RecursiveAction表示不返回任何值的任务。
+
+**语法**
+```
+class Writer extends RecursiveAction {
+   @Override
+   protected void compute() { 
+   }
+}
+```
+#### 递归任务
+RecursiveTask表示返回值的任务。
+
+**语法**
+```
+class Sum extends RecursiveTask {
+   @Override
+   protected Long compute() { 
+   return null;
+   }
+}
+``` 
+## 并发集合
+### 创建一个队列集合
+```
+//创建一个队列
+BlockingQueue<Integer> queue = new ArrayBlockingQueue<Integer>(10);
+//添加一个元素，删除一个元素
+queue.put();queue.take();
+```
+### ConcurrentMap
+接口是Map接口的子接口，支持底层Map变量上的原子操作。 它具有获取和设置方法，如在变量上的读取和写入。 也就是说，一个集合与同一变量上的任何后续读取相关联。 该接口确保线程安全性和原子性保证。 
+```
+Map<String,String> map = new ConcurrentHashMap<String, String>();
+ map.put(key,value);
+ Iterator<String> iterator = map.keySet().iterator();
+```
+### ConcurrentNavigableMap
+接口是ConcurrentMap接口的子接口，并且支持NavigableMap操作，并且对其可导航子映射和近似匹配进行递归。
+```
+ ConcurrentNavigableMap<String,String> map = new ConcurrentSkipListMap<String, String>();
+ 
+      map.put("1", "One");
+      map.put("2", "Two");
+      map.put("3", "Three");
+      map.put("5", "Five");
+      map.put("6", "Six");
+ 
+      System.out.println("Initial ConcurrentHashMap: "+map);
+      System.out.println("HeadMap(\"2\") of ConcurrentHashMap: "+map.headMap("2"));
+      System.out.println("TailMap(\"2\") of ConcurrentHashMap: "+map.tailMap("2"));
+      System.out.println("SubMap(\"2\", \"4\") of ConcurrentHashMap: "+map.subMap("2","4"));
+  ```
+  输出结果
+  ```
+Initial ConcurrentHashMap: {1=One, 2=Two, 3=Three, 5=Five, 6=Six}
+HeadMap("2") of ConcurrentHashMap: {1=One}
+TailMap("2") of ConcurrentHashMap: {2=Two, 3=Three, 5=Five, 6=Six}
+SubMap("2", "4") of ConcurrentHashMap: {2=Two, 3=Three}  
+  ```
